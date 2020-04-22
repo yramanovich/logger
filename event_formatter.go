@@ -42,12 +42,16 @@ func (s JSONFormatter) message(level LogLevel, t time.Time, args ...interface{})
 		}
 		msg[key] = args[i]
 	}
+	var (
+		data []byte
+		err error
+	)
 	if s.Pretty {
-		data, err := json.MarshalIndent(msg, "", "  ")
-		return string(data), err
+		data, err = json.MarshalIndent(msg, "", "  ")
+	} else {
+		data, err = json.Marshal(msg)
 	}
-	data, err := json.Marshal(msg)
-	return string(data), err
+	return string(data) + "\n", err
 }
 
 type defaultFormatter struct{}
