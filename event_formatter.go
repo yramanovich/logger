@@ -24,8 +24,8 @@ type JSONFormatter struct {
 }
 
 func (s JSONFormatter) message(level LogLevel, t time.Time, args ...interface{}) (string, error) {
-	if len(args) < 2 {
-		return "", fmt.Errorf("JSONFormatter: required 2 or more arguments")
+	if len(args) == 1 {
+		args = append([]interface{}{"msg"}, args...)
 	}
 	msg := make(map[string]interface{})
 	msg["level"] = level.String()
