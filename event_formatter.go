@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,6 +16,38 @@ const (
 // Formatter is used by the logger in order to get a final log message representation.
 type Formatter interface {
 	message(level LogLevel, t time.Time, args ...interface{}) (string, error)
+}
+
+// JSONFormatter represents log in json format. Arguments must be provided as a separate values.
+type JSONFormatter struct {
+	Pretty bool
+}
+
+func (s JSONFormatter) message(level LogLevel, t time.Time, args ...interface{}) (string, error) {
+	if len(args) < 2 {
+		return "", fmt.Errorf("JSONFormatter: required 2 or more arguments")
+	}
+	msg := make(map[string]interface{})
+	msg["level"] = level.String()
+	msg["t"] = t.Format(timeFormat)
+	var key string
+	for i := 0; i < len(args); i++ {
+		if i%2 == 0 {
+			v, ok := args[i].(string)
+			if !ok {
+				v = "undef[" + strconv.Itoa(i) + "]"
+			}
+			key = v
+			continue
+		}
+		msg[key] = args[i]
+	}
+	if s.Pretty {
+		data, err := json.MarshalIndent(msg, "", "  ")
+		return string(data), err
+	}
+	data, err := json.Marshal(msg)
+	return string(data), err
 }
 
 type defaultFormatter struct{}
@@ -75,7 +108,7 @@ func interfaceType(arg interface{}) string {
 		return strconv.Itoa(*x)
 	case uint64:
 		return strconv.FormatUint(x, 10)
-	case*uint64:
+	case *uint64:
 		return strconv.FormatUint(*x, 10)
 	case uint32:
 		return strconv.FormatUint(uint64(x), 10)
